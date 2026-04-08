@@ -1,98 +1,125 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useEffect, useMemo } from "react";
+import { ScrollView, Text, View } from "react-native";
+import { Card } from "../../src/components/Card";
+import { ErrorMessage } from "../../src/components/ErrorMessage";
+import { Header } from "../../src/components/Header";
+import { Loading } from "../../src/components/Loading";
+import { Screen } from "../../src/components/Screen";
+import { useApp } from "../../src/context/AppContext";
+import { colors, spacing, typography } from "../../src/styles/theme";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function DashboardScreen() {
+  const { users, products, loading, error, loadAll } = useApp();
 
-export default function HomeScreen() {
+  useEffect(() => {
+    if (users.length === 0 || products.length === 0) loadAll();
+  }, []);
+
+  const stats = useMemo(() => {
+    const categories = new Set(products.map((p) => p.category).filter(Boolean));
+    const avgPrice =
+      products.length === 0
+        ? 0
+        : products.reduce((sum, p) => sum + (p.price || 0), 0) /
+          products.length;
+    return {
+      userCount: users.length,
+      productCount: products.length,
+      categoryCount: categories.size,
+      avgPrice,
+    };
+  }, [users, products]);
+
+  const isLoading = loading.users || loading.products;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <Screen>
+      <Header title="Dashboard" />
+      <ScrollView
+        contentContainerStyle={{
+          padding: spacing.md,
+          gap: spacing.md,
+          paddingBottom: 120,
+        }}
+      >
+        {error ? <ErrorMessage message={error} onRetry={loadAll} /> : null}
+        {isLoading ? <Loading /> : null}
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <View style={{ borderRadius: 28, overflow: "hidden" }}>
+          <LinearGradient
+            colors={[
+              "rgba(98, 0, 238, 0.18)",
+              "rgba(72, 0, 178, 0.02)",
+              "rgba(248, 249, 254, 1)",
+            ]}
+            start={{ x: 0.15, y: 0 }}
+            end={{ x: 0.9, y: 1 }}
+            style={{ padding: spacing.lg }}
+          >
+            <Text
+              style={[typography.labelMd, { color: colors.onSurfaceVariant }]}
+            >
+              Quick stats
+            </Text>
+            <View style={{ height: spacing.sm }} />
+            <Text style={[typography.displayLg, { color: colors.onSurface }]}>
+              {stats.productCount} products
+            </Text>
+            <Text
+              style={[typography.bodyLg, { color: colors.onSurfaceVariant }]}
+            >
+              across {stats.categoryCount} categories · {stats.userCount} users
+            </Text>
+          </LinearGradient>
+        </View>
+
+        <View style={{ flexDirection: "row", gap: spacing.md }}>
+          <Card style={{ flex: 1 }}>
+            <Text
+              style={[typography.labelMd, { color: colors.onSurfaceVariant }]}
+            >
+              Users
+            </Text>
+            <Text style={[typography.displayLg, { color: colors.onSurface }]}>
+              {stats.userCount}
+            </Text>
+          </Card>
+          <Card style={{ flex: 1 }}>
+            <Text
+              style={[typography.labelMd, { color: colors.onSurfaceVariant }]}
+            >
+              Products
+            </Text>
+            <Text style={[typography.displayLg, { color: colors.onSurface }]}>
+              {stats.productCount}
+            </Text>
+          </Card>
+        </View>
+
+        <View style={{ flexDirection: "row", gap: spacing.md }}>
+          <Card style={{ flex: 1 }}>
+            <Text
+              style={[typography.labelMd, { color: colors.onSurfaceVariant }]}
+            >
+              Categories
+            </Text>
+            <Text style={[typography.displayLg, { color: colors.onSurface }]}>
+              {stats.categoryCount}
+            </Text>
+          </Card>
+          <Card style={{ flex: 1 }}>
+            <Text
+              style={[typography.labelMd, { color: colors.onSurfaceVariant }]}
+            >
+              Avg Price
+            </Text>
+            <Text style={[typography.displayLg, { color: colors.onSurface }]}>
+              ${stats.avgPrice.toFixed(2)}
+            </Text>
+          </Card>
+        </View>
+      </ScrollView>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
